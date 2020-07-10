@@ -1,21 +1,19 @@
 import os
 from datetime import datetime
-from flask import Flask, redirect, render_template, request, session
+from flask import Flask, redirect, render_template, request, session, url_for
 
 app = Flask(__name__)
 app.secret_key = "randomstring123"
 messages = []
 
 
-def add_messages(username, message):
+def add_message(username, message):
     """Add messages to the messages list"""
     now = datetime.now().strftime("%H:%M:%S")
-    messages_dict = {"timestamp": now,
+    messages.append({"timestamp": now,
                     "from": username,
                     "message": message
-                    }
-
-    messages.append(messages_dict)
+                    })
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -25,7 +23,7 @@ def index():
         session["username"] = request.form["username"]
 
     if "username" in session:
-        return redirect(session["username"])
+        return redirect(url_for("user", username=session["username"]))
 
     return render_template("index.html")
 
@@ -36,8 +34,8 @@ def user(username):
     if request.method == "POST":
         username = session["username"]
         message = request.form["message"]
-        add_messages(username, message)
-        return redirect(session["username"])
+        add_message(username, message)
+        return redirect(url_for("user", username=session["username"]))
 
     return render_template("chat.html", username = username, chat_messages = messages)
 
@@ -45,7 +43,7 @@ def user(username):
 @app.route('/<username>/<message>')
 def send_message(username, message):
     """Create a new message and redirect back to chat app"""
-    add_messages(username, message)
+    add_message(username, message)
     return redirect("/" + username)
 
 
